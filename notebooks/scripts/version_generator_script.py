@@ -10,6 +10,10 @@ class ErrorCorrectionLevel(Enum):
     Q = 3
     H = 4
 
+
+# version_dict[version-1][ErrorCorrectionLevel.XX.value][ModeIndicator.YY]
+# XX: L, M, H, Q
+# YY: numeric, alphanumeric, byte, kanji
 version_dict = [{
         ErrorCorrectionLevel.L.value: [41, 25, 17, 10],
         ErrorCorrectionLevel.M.value: [34, 20, 14, 8],
@@ -252,7 +256,8 @@ version_dict = [{
     }
 ]
 
-filepath = "../resources/version.pickle"
+# filepath = "resources/version.pickle"
+filepath = "notebooks/scripts/version.pickle"
 
 # JSON
 # with open(filepath, "w") as file:
