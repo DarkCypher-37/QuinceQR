@@ -1,20 +1,42 @@
 import pickle
+from typing import Optional
 
 class GF256_Number:
+    """
+    Represents a number in the Galois Field GF(256).
+    
+    Attributes:
+        alpha (int): The alpha-notation value of the GF256 number.
+        integer (int): The integer-notation value of the GF256 number.
 
-    def __init__(self, alpha=None, integer=None) -> None:
-        
-        self.log_table = self.load_log_table()
-        self.antilog_table = self.load_antilog_table()
+        at least one of the alpha or the integer notation values have to be specified!
 
-        # TODO: proper commenting
+    '2**alpha = integer'
+    """
+
+    log_table = None
+    antilog_table = None
+
+    def __init__(self, alpha: Optional[int] = None, integer: Optional[int] = None) -> None:
+        """
+        Initializes a new GF256_Number
+
+        """
+
+        filepath_log_table = "resources/log_table.pickle"
+        filepath_antilog_table = "resources/antilog_table.pickle"
+
+        if GF256_Number.log_table is None:
+            self._load_log_table(filepath_log_table)
+        if GF256_Number.antilog_table is None:
+            self._load_antilog_table(filepath_antilog_table)
 
         if alpha is None and integer is None:
             # Neither were specified
             raise ValueError("Neither the alpha-notation, nor the integer-notation were specified")
         
         elif alpha is None:
-            # integer was specified
+            # Integer was specified
             if not 1 <= integer <= 255:
                 raise ValueError(f"the specified integer is not in GF(256), must be in the range 1 <= integer <= 255, not: {integer}")
             
@@ -22,7 +44,7 @@ class GF256_Number:
             self._alpha = self._integer_to_alpha(integer)
 
         elif integer is None:
-            # alpha was specified
+            # Alpha was specified
             if not 0 <= alpha <= 255:
                 raise ValueError(f"the specified alpha is not in GF(256), must be in the range 0 <= alpha <= 255, not: {alpha}")
             
@@ -96,43 +118,64 @@ class GF256_Number:
         self._integer = integer
         self._alpha = self._integer_to_alpha(integer)
 
-    def load_log_table(self) -> list:
-        filepath_log_table = "../resources/log_table.pickle"
-
+    @classmethod
+    def _load_log_table(cls, filepath_log_table) -> list:
         with open(filepath_log_table, 'rb') as file:
             log_table = pickle.load(file)
-
-        return log_table
     
-    def load_antilog_table(self) -> list:
-        filepath_antilog_table = "../resources/antilog_table.pickle"
+        cls.log_table = log_table
 
+    @classmethod
+    def _load_antilog_table(cls, filepath_antilog_table) -> list:
         with open(filepath_antilog_table, 'rb') as file:
             antilog_table = pickle.load(file)
 
-        return antilog_table
+        cls.antilog_table = antilog_table
 
     def _integer_to_alpha(self, integer: int) -> int:
         """ 
+        converts from integer to alpha-notation
         antilog_table[integer] = alpha
         """
-        alpha = self.antilog_table[integer]
+        alpha = GF256_Number.antilog_table[integer]
         return alpha
 
     def _alpha_to_integer(self, alpha: int) -> int:
         """ 
+        converts from alpha to integer-notation
         log_table[alpha] = integer
         """
-        integer = self.log_table[alpha]
+        integer = GF256_Number.log_table[alpha]
         return integer
     
     @staticmethod
     def gf256_multiply(a: "GF256_Number", b: "GF256_Number") -> "GF256_Number":
-        # adding the exponents, as it is quivalent to multiplying
-        # eg. a**n * a**m = a**(n+m)
+        """
+        Multiplies two GF256 Numbers
+
+        adding the exponents, as it is quivalent to multiplying
+            eg. a**n * a**m = a**(n+m)
+        """
         alpha = a.alpha + b.alpha
         return GF256_Number(alpha=alpha%255)
 
     @staticmethod
     def gf256_add(a: "GF256_Number", b: "GF256_Number") -> "GF256_Number":
+        """
+        Adds two GF256 NUmbers
+        equivalent to bitwise XOR
+        """
+        print(f"{a=}, {b=}, {a.integer^b.integer=}")
         return GF256_Number(integer=a.integer ^ b.integer)
+
+def main():
+    g1 = GF256_Number(integer=5)
+    g2 = GF256_Number(integer=6)
+
+    # TODO: if g1 is equal to g2 and the two are added the result is integer=0, which is currently not allowed
+
+    print(g1 + g2)
+    print(g1 * g2)
+
+if __name__ == "__main__":
+    main()
