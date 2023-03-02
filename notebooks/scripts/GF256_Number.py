@@ -17,14 +17,19 @@ class GF256_Number:
     log_table = None
     antilog_table = None
 
-    def __init__(self, alpha: Optional[int] = None, integer: Optional[int] = None) -> None:
+    UPPER_BOUND = 255
+    ALPHA_LOWER_BOUND = 0
+    # INTEGER_LOWER_BOUND = 1
+    INTEGER_LOWER_BOUND = 0
+
+    def __init__(self, integer: Optional[int] = None, alpha: Optional[int] = None) -> None:
         """
         Initializes a new GF256_Number
 
         """
 
-        filepath_log_table = "resources/log_table.pickle"
-        filepath_antilog_table = "resources/antilog_table.pickle"
+        filepath_log_table = "../resources/log_table.pickle"
+        filepath_antilog_table = "../resources/antilog_table.pickle"
 
         if GF256_Number.log_table is None:
             self._load_log_table(filepath_log_table)
@@ -37,26 +42,26 @@ class GF256_Number:
         
         elif alpha is None:
             # Integer was specified
-            if not 1 <= integer <= 255:
-                raise ValueError(f"the specified integer is not in GF(256), must be in the range 1 <= integer <= 255, not: {integer}")
+            if not GF256_Number.INTEGER_LOWER_BOUND <= integer <= GF256_Number.UPPER_BOUND:
+                raise ValueError(f"the specified integer is not in GF(256), must be in the range {GF256_Number.INTEGER_LOWER_BOUND} <= integer <= {GF256_Number.UPPER_BOUND}, not: {integer}")
             
             self._integer = integer
             self._alpha = self._integer_to_alpha(integer)
 
         elif integer is None:
             # Alpha was specified
-            if not 0 <= alpha <= 255:
-                raise ValueError(f"the specified alpha is not in GF(256), must be in the range 0 <= alpha <= 255, not: {alpha}")
+            if not GF256_Number.ALPHA_LOWER_BOUND <= alpha <= GF256_Number.UPPER_BOUND:
+                raise ValueError(f"the specified alpha is not in GF(256), must be in the range {GF256_Number.ALPHA_LOWER_BOUND} <= alpha <= {GF256_Number.UPPER_BOUND}, not: {alpha}")
             
             self._alpha = alpha
             self._integer = self._alpha_to_integer(alpha)
 
         elif not (alpha is None or integer is None):
             # Both arguments were specified
-            if not 0 <= alpha <= 255:
-                raise ValueError(f"the specified alpha is not in GF(256), must be in the range 0 <= alpha <= 255, not: {alpha}")
-            elif not 1 <= integer <= 255:
-                raise ValueError(f"the specified integer is not in GF(256), must be in the range 1 <= integer <= 255, not: {integer}")
+            if not GF256_Number.ALPHA_LOWER_BOUND <= alpha <= GF256_Number.UPPER_BOUND:
+                raise ValueError(f"the specified alpha is not in GF(256), must be in the range {GF256_Number.ALPHA_LOWER_BOUND} <= alpha <= {GF256_Number.UPPER_BOUND}, not: {alpha}")
+            elif not GF256_Number.INTEGER_LOWER_BOUND <= integer <= GF256_Number.UPPER_BOUND:
+                raise ValueError(f"the specified integer is not in GF(256), must be in the range {GF256_Number.INTEGER_LOWER_BOUND} <= integer <= {GF256_Number.UPPER_BOUND}, not: {integer}")
             
             if alpha == self._integer_to_alpha(integer):
                 self._alpha = alpha
@@ -68,7 +73,7 @@ class GF256_Number:
         return f"integer: {self.integer}, alpha: {self.alpha}"
     
     def __repr__(self):
-        return f"GF256({self.integer, self.alpha})"
+        return f"GF256{self.integer, self.alpha}"
  
     def __add__(self, other: "GF256_Number") -> "GF256_Number":
         if isinstance(other, GF256_Number):
@@ -93,6 +98,9 @@ class GF256_Number:
         self._alpha = result.alpha
         self._integer = result.integer
         return self
+    
+    def __eq__(self, other: "GF256_Number") -> bool:
+        return self.integer == other.integer
 
     @property
     def alpha(self) -> int:
@@ -100,8 +108,8 @@ class GF256_Number:
 
     @alpha.setter
     def alpha(self, alpha: int):
-        if not 0 <= alpha <= 255:
-            raise ValueError(f"the specified alpha is not in GF(256), must be in the range 0 <= alpha <= 255, not: {alpha}")
+        if not GF256_Number.ALPHA_LOWER_BOUND <= alpha <= GF256_Number.UPPER_BOUND:
+            raise ValueError(f"the specified alpha is not in GF(256), must be in the range {GF256_Number.ALPHA_LOWER_BOUND} <= alpha <= {GF256_Number.UPPER_BOUND}, not: {alpha}")
         
         self._alpha = alpha
         self._integer = self._alpha_to_integer(alpha)
@@ -112,8 +120,8 @@ class GF256_Number:
 
     @integer.setter
     def integer(self, integer: int):
-        if not 1 <= integer <= 255:
-            raise ValueError(f"the specified integer is not in GF(256), must be in the range 1 <= integer <= 255, not: {integer}")
+        if not GF256_Number.INTEGER_LOWER_BOUND <= integer <= GF256_Number.UPPER_BOUND:
+            raise ValueError(f"the specified integer is not in GF(256), must be in the range {GF256_Number.INTEGER_LOWER_BOUND} <= integer <= {GF256_Number.UPPER_BOUND}, not: {integer}")
         
         self._integer = integer
         self._alpha = self._integer_to_alpha(integer)
@@ -138,6 +146,11 @@ class GF256_Number:
         antilog_table[integer] = alpha
         """
         alpha = GF256_Number.antilog_table[integer]
+
+        # TODO: fix this properly
+        if alpha is None:
+            print(f"Be careful outta there, the alpha is currently: {alpha}")
+
         return alpha
 
     def _alpha_to_integer(self, alpha: int) -> int:
@@ -156,8 +169,12 @@ class GF256_Number:
         adding the exponents, as it is quivalent to multiplying
             eg. a**n * a**m = a**(n+m)
         """
+        if a.alpha is None or b.alpha is None:
+            print(f"You just multiplied 0 by 0 in GF(256)! Be proud of yourself!")
+            return GF256_Number(integer=0)
+        
         alpha = a.alpha + b.alpha
-        return GF256_Number(alpha=alpha%255)
+        return GF256_Number(alpha=alpha%255) # TODO: maybe GF256_Number.UPPER_BOUND
 
     @staticmethod
     def gf256_add(a: "GF256_Number", b: "GF256_Number") -> "GF256_Number":
@@ -165,12 +182,11 @@ class GF256_Number:
         Adds two GF256 NUmbers
         equivalent to bitwise XOR
         """
-        print(f"{a=}, {b=}, {a.integer^b.integer=}")
         return GF256_Number(integer=a.integer ^ b.integer)
 
 def main():
     g1 = GF256_Number(integer=5)
-    g2 = GF256_Number(integer=6)
+    g2 = GF256_Number(integer=5)
 
     # TODO: if g1 is equal to g2 and the two are added the result is integer=0, which is currently not allowed
 
