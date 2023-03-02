@@ -148,8 +148,10 @@ class GF256_Number:
         alpha = GF256_Number.antilog_table[integer]
 
         # TODO: fix this properly
-        if alpha is None:
-            print(f"Be careful outta there, the alpha is currently: {alpha}")
+        SWITCH = False
+        if alpha is None and SWITCH:
+            print(f"alpha: {alpha}")
+            # print(f"Be careful outta there, the alpha is currently: {alpha}")
 
         return alpha
 
