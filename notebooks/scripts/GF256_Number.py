@@ -172,7 +172,12 @@ class GF256_Number:
             eg. a**n * a**m = a**(n+m)
         """
         if a.alpha is None or b.alpha is None:
-            print(f"You just multiplied 0 by 0 in GF(256)! Be proud of yourself!")
+
+            # TODO: fix this properly
+            SWITCH = False
+            if SWITCH:
+                print(f"You just multiplied 0 by 0 in GF(256)! Be proud of yourself!")
+                
             return GF256_Number(integer=0)
         
         alpha = a.alpha + b.alpha
