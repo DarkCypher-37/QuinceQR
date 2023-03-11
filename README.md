@@ -1,5 +1,22 @@
 # QrCode
 
+## Ziele
+
+- [x] Grobe Datenanalyse/Datenverwaltung: Passende Kodierung wählen (numerisch, alphanumerisch, Byte (Latin-1) und Kanji (shift JIS))
+- [x] Minimale Version (bzw. Größe) berechnen, padding und in Codewörter unterteilen
+- [x] Error Correction Coding: Redundante Bytes zur Fehlerbehebung berechnen (Reed-Solomon-Code)
+- [x] Zahlen im Galois-Feld GF(256)
+- [x] Generator-Polynom und Message-Polynom erstellen
+- [x] Polynomen Division
+- [x] Die Daten passend sortieren, sodass der QR-Code gefüllt werden kann
+- [x] Den QR-Code mit function patterns füllern
+- [x] Die QR-Code Matrix mit den Daten und dessen Fehlerkorrektur füllen
+- [ ] Maskieren des QR-Codes
+- [ ] Versions Informationen+Fehlerkorrekturbits erstellen
+- [ ] Versions Informationen in den QR-Code einfügen
+- [ ] Format Informationen+Fehlerkorrekturbits erstellen
+- [ ] Format Informationen in den QR-Code einfügen
+
 ## Resources
 
 - [Thonky's QR Code tutorial](https://www.thonky.com/qr-code-tutorial/)
