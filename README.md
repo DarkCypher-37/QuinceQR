@@ -20,6 +20,9 @@
 ## Resources
 
 - [Thonky's QR Code tutorial](https://www.thonky.com/qr-code-tutorial/)
+- [QR-Code spec](https://www.swisseduc.ch/informatik/theoretische_informatik/qr_codes/docs/qr_standard.pdf)
+- [another tutorial](https://dev.to/maxart2501/let-s-develop-a-qr-code-generator-part-v-masking-30dl)
+
 
 ## Resources, not used
 
