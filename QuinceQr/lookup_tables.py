@@ -1,6 +1,7 @@
 import pickle
+import numpy as np
 
-from enumerations import ErrorCorrectionLevel, ModeIndicator, SizeLevel
+from enumerations import *
 
 
 def load_pickle_file(filepath: str):
@@ -572,6 +573,28 @@ mode_indicator_mapping = {
     ModeIndicator.kanji_mode: "1000"
 }
 
+FINDER_PATTERN = np.array(
+    [
+        [Module.black, Module.black, Module.black, Module.black, Module.black, Module.black, Module.black],
+        [Module.black, Module.white, Module.white, Module.white, Module.white, Module.white, Module.black],
+        [Module.black, Module.white, Module.black, Module.black, Module.black, Module.white, Module.black],
+        [Module.black, Module.white, Module.black, Module.black, Module.black, Module.white, Module.black],
+        [Module.black, Module.white, Module.black, Module.black, Module.black, Module.white, Module.black],
+        [Module.black, Module.white, Module.white, Module.white, Module.white, Module.white, Module.black],
+        [Module.black, Module.black, Module.black, Module.black, Module.black, Module.black, Module.black]
+    ]
+)
+
+ALIGNMENT_PATTERN = np.array(
+    [  
+        [Module.black, Module.black, Module.black, Module.black, Module.black],
+        [Module.black, Module.white, Module.white, Module.white, Module.black],
+        [Module.black, Module.white, Module.black, Module.white, Module.black],
+        [Module.black, Module.white, Module.white, Module.white, Module.black],
+        [Module.black, Module.black, Module.black, Module.black, Module.black]
+    ]
+)
+
 def main():
     version_dict_file = load_pickle_file("resources/version.pickle")
     assert version_dict_file == version_dict, "version_dict is not correct"
@@ -590,6 +613,8 @@ def main():
     
     version_information_string_file = load_pickle_file("resources/version_information_string.pickle")
     assert version_information_string_file == version_information_string, "version_information_string is not correct"
+
+    # print(error_correction_table[1, ErrorCorrectionLevel.M])
 
 if __name__ == "__main__":
     main()

@@ -11,11 +11,11 @@
 - [x] Die Daten passend sortieren, sodass der QR-Code gefüllt werden kann
 - [x] Den QR-Code mit function patterns füllern
 - [x] Die QR-Code Matrix mit den Daten und dessen Fehlerkorrektur füllen
-- [ ] Maskieren des QR-Codes
-- [ ] Versions Informationen+Fehlerkorrekturbits erstellen
-- [ ] Versions Informationen in den QR-Code einfügen
-- [ ] Format Informationen+Fehlerkorrekturbits erstellen
-- [ ] Format Informationen in den QR-Code einfügen
+- [x] Maskieren des QR-Codes
+- [x] Versions Informationen+Fehlerkorrekturbits erstellen
+- [x] Versions Informationen in den QR-Code einfügen
+- [x] Format Informationen+Fehlerkorrekturbits erstellen
+- [x] Format Informationen in den QR-Code einfügen
 
 ## Resources
 

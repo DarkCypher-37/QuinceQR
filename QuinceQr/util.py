@@ -1,8 +1,8 @@
-import pickle
+import numpy as np
 
-from itertools import zip_longest
+from itertools import zip_longest, product
 
-from enumerations import ErrorCorrectionLevel, ModeIndicator, SizeLevel
+from enumerations import *
 import lookup_tables
 
 
@@ -98,7 +98,7 @@ def get_total_number_codewords(version: int, error_correction_level: ErrorCorrec
     
     """
     
-    error_correction_info = lookup_tables.error_correction_table[(version, error_correction_level)]
+    error_correction_info = lookup_tables.error_correction_table[version, error_correction_level]
     return error_correction_info[0]
 
 def get_blocks_per_group(version: int, error_correction_level: ErrorCorrectionLevel) -> tuple:
@@ -113,7 +113,7 @@ def get_blocks_per_group(version: int, error_correction_level: ErrorCorrectionLe
     
     """
     
-    error_correction_info = lookup_tables.error_correction_table[(version, error_correction_level)]
+    error_correction_info = lookup_tables.error_correction_table[version, error_correction_level]
     return (error_correction_info[2], error_correction_info[4])
 
 def get_codewords_per_block(version: int, error_correction_level: ErrorCorrectionLevel) -> tuple:
@@ -128,7 +128,7 @@ def get_codewords_per_block(version: int, error_correction_level: ErrorCorrectio
     
     """
     
-    error_correction_info = lookup_tables.error_correction_table[(version, error_correction_level)]
+    error_correction_info = lookup_tables.error_correction_table[version, error_correction_level]
     return (error_correction_info[3], error_correction_info[5])
 
 def get_error_correction_codewords_per_block(version: int, error_correction_level: ErrorCorrectionLevel) -> int:
@@ -143,7 +143,7 @@ def get_error_correction_codewords_per_block(version: int, error_correction_leve
     
     """
     
-    error_correction_info = lookup_tables.error_correction_table[(version, error_correction_level)]
+    error_correction_info = lookup_tables.error_correction_table[version, error_correction_level]
     return error_correction_info[1]
 
 
@@ -172,7 +172,103 @@ def get_remainder_bits(version: int) -> int:
         raise ValueError(f"the version needs to be in the range 1 through 40")
     return lookup_tables.remainder_bits_table[version-1]
 
+def calc_qr_size(version: int) -> int:
+    """ 
+    calculate the width or height of the QR-Code when given a version
 
+    """
+    return (((version-1)*4)+21)
+
+def place_pattern(matrix: np.ndarray, pattern: np.ndarray, upper_left_corner: tuple, overwrite=True) -> np.ndarray:
+    """ 
+    place a pattern from a small 2d array into a big 2d array at a certain position
+    if overwrite is False, the matrix will not be change if something beside 'Module.empty' would be overwritten
+    """
+
+    mat = matrix.copy()
+
+    # Check that the pattern fits within the bounds of the matrix
+    if upper_left_corner[0] + len(pattern[0]) > len(mat[0]) or upper_left_corner[1] + len(pattern) > len(mat):
+        raise ValueError(f"Pattern does not fit within matrix bounds: {upper_left_corner=}, {mat.shape=}, {pattern.shape=}")
+
+    # Check that the upper_left_corner coordinates are valid
+    if upper_left_corner[0] < 0 or upper_left_corner[1] < 0:
+        raise ValueError("Upper left corner coordinates must be non-negative")
+
+    end = upper_left_corner[0]+len(pattern[0]), upper_left_corner[1]+len(pattern)
+
+    # only change the matrix if the 'overwrite' flag is set
+    if not overwrite:
+        area = mat[upper_left_corner[1]:end[1], upper_left_corner[0]:end[0]]
+        if not np.all(area == np.full_like(pattern, fill_value=Module.empty)):
+            return mat
+        
+    mat[upper_left_corner[1]:end[1], upper_left_corner[0]:end[0]] = pattern
+
+    return mat
+
+def calculate_finder_positions(version: int) -> tuple:
+    """ 
+    returns the top left corners of the finder positions, when given a version
+    """
+    # return (0, 0), ((((version-1)*4)+21) - 7, 0), (0, (((version-1)*4)+21) - 7)
+    return (0, 0), (14 + 4*(version-1), 0), (0, 14 + 4*(version-1))
+
+def shift_finder_pattern(upper_left_corner: tuple, offset: tuple) -> tuple:
+    """ 
+    shift the finder pattern to the new position within an 8x8 matrix
+    """
+    shifted_pattern = place_pattern(np.full((8, 8), fill_value=Module.white), lookup_tables.FINDER_PATTERN, offset)
+    upper_left_corner = upper_left_corner[0]-offset[0], upper_left_corner[1]-offset[1]
+    
+    return shifted_pattern, upper_left_corner
+
+def get_alignment_positions(version: int) -> list:
+    """ 
+    returns the top left corners of the alignment positions, when given a version
+    """
+    if not 2 <= version <= 40:
+        raise ValueError(f"The QR-Code version must be in the range '2 <= version <= 40' not {version}")
+
+    return list(product(lookup_tables.alignment_pattern_locations_table[version], repeat=2))
+
+def make_timing_patterns(version: int) -> tuple:
+    """ 
+    returns horizontal and vertical timing patterns
+    """
+    size = calc_qr_size(version)
+    length = int((size-16)/2)
+    # interchanging black and white, but starts with black and ends with black
+    horizontal = np.array([[Module.black, *[Module.white, Module.black]*length]])
+    
+    return horizontal, np.rot90(horizontal)
+
+def get_version_information_string(version: int) -> str:
+    """
+    returns the version information string for any given version (must be above version 6!)
+    """
+    if 6 < version < 41:
+        return lookup_tables.version_information_string[version]
+    raise ValueError(f"version must be in range 6 < version < 41, not: {version=}")
+
+
+def get_format_information_string(error_correction_level: ErrorCorrectionLevel, mask_pattern_num: int) -> str:
+    if not 0 <= mask_pattern_num <= 7:
+        raise ValueError(f"mask_pattern_num must be in range 0 <= mask_pattern_num <= 7, not: {mask_pattern_num=}")
+    return lookup_tables.format_information_string[error_correction_level, mask_pattern_num]
+
+masking_conditions = [
+    lambda row, column: (row + column) % 2 == 0,
+    lambda row, column: row % 2 == 0,
+    lambda row, column: column % 3 == 0,
+    lambda row, column: (row + column) % 3 == 0,
+    lambda row, column: ( int(row / 2) + int(column / 3) ) % 2 == 0,
+    lambda row, column: ((row * column) % 2) + ((row * column) % 3) == 0,
+    lambda row, column: ( ((row * column) % 2) + ((row * column) % 3) ) % 2 == 0,
+    lambda row, column: ( ((row + column) % 2) + ((row * column) % 3) ) % 2 == 0
+]
+
+evaluation_condition3_pattern = np.array([Module.white, Module.white, Module.white, Module.white, Module.black, Module.white, Module.black, Module.black, Module.black, Module.white, Module.black])
 
 def main():
     # get_size_from_version(...)
@@ -261,6 +357,12 @@ def main():
     # get_remainder_bits(...)
     assert get_remainder_bits(40) == 0
     assert get_remainder_bits(1) == 0
+
+    # calculate_finder_positions(...)
+    assert calculate_finder_positions(17) == ((0, 0), (78, 0), (0, 78))
+
+    # get_alignment_positions(...)
+    assert get_alignment_positions(2) == get_alignment_positions(2)
 
 
 if __name__ == "__main__":
