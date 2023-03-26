@@ -9,8 +9,9 @@ from lookup_tables import ALIGNMENT_PATTERN
 import polynomial_division
 import util
 
+__all__ = ["QrCode", "ErrorCorrectionLevel"]
 
-class QuinceQr:
+class QrCode:
 
     def __init__(self, data: str, error_correction_level: ErrorCorrectionLevel, version: int = 1) -> None:
         """
@@ -780,7 +781,7 @@ def main():
     # print(qr.version)
     # qr = QuinceQr("HELLO WORLD", ErrorCorrectionLevel.Q, version=5)
     # qr = QuinceQr("asdafd sadf345435", ErrorCorrectionLevel.M)
-    qr = QuinceQr("HELLO WORLD", ErrorCorrectionLevel.Q)
+    qr = QrCode("HELLO WORLD", ErrorCorrectionLevel.Q)
     
     img = qr.make_image()
     img.show()
