@@ -756,7 +756,7 @@ class QrCode:
     def change_data(self):
         ...
 
-    def make_image(self, image_size: tuple = (600, 600)):
+    def make_image(self, image_size: tuple = 600):
         """
         make the QR-Code data matrix into an pillow image
         """
@@ -767,7 +767,7 @@ class QrCode:
             rgb_matrix[row_index, col_index] = np.array([0, 0, 0]) if value == Module.black else np.array([255, 255, 255])
 
         img = Image.fromarray(rgb_matrix)
-        img = img.resize(image_size, resample=Image.NEAREST)
+        img = img.resize((image_size, image_size), resample=Image.NEAREST)
         
         return img
 
