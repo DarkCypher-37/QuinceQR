@@ -717,10 +717,19 @@ class QrCode:
         bit_string = self._all_codewords_to_bits(all_codewords)
         return bit_string
 
-    def _layout_phase(self, bit_string: str, force_mask: int = None) -> np.ndarray:
+    def _layout_phase(self, bit_string: str, force_mask: int = None, border_size: int = 3) -> np.ndarray:
         """
         layout the matrix for the QR-Code and place all the Modules within the matrix
-        you can force a specific mask using force_mask (needs to be in range 0..7 (both inclusive))
+
+        Parameters
+        ----------
+        bit-string: str
+            the string of bits to be placed in the matrix
+        force_mask: int = None
+            when provided, forces a certain mask to be used. (needs to be in range 0..7 (both inclusive))
+        border_size: int = 3
+            when provided, makes a white perimeter around the QR-Code (mesured in Modules from one side to the QR-Code)
+        
         """
 
         size = util.calc_qr_size(self.version)
@@ -744,6 +753,8 @@ class QrCode:
 
         matrix = self._place_format_information_string(matrix, mask_pattern_num)
         matrix = self._unify_blacks_and_whites(matrix)
+
+        matrix = util.place_pattern(np.full((matrix.shape[0]+border_size*2, matrix.shape[1]+border_size*2), fill_value=Module.white), pattern=matrix, upper_left_corner=(3, 3))
 
         return matrix
 
@@ -791,8 +802,8 @@ def main():
     # print(qr.version)
     # qr = QuinceQr("HELLO WORLD", ErrorCorrectionLevel.Q, version=5)
     # qr = QuinceQr("asdafd sadf345435", ErrorCorrectionLevel.M)
-    qr = QrCode("HELLO WORLD", ErrorCorrectionLevel.Q, force_mask=7)
-    # qr = QrCode("HELLO WORLD", ErrorCorrectionLevel.Q)
+    # qr = QrCode("HELLO WORLD", ErrorCorrectionLevel.Q, force_mask=7)
+    qr = QrCode("HELLO WORLD", ErrorCorrectionLevel.Q)
     
     img = qr.make_image()
     img.show()
