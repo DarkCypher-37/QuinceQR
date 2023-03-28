@@ -13,7 +13,7 @@ __all__ = ["QrCode", "ErrorCorrectionLevel"]
 
 class QrCode:
 
-    def __init__(self, data: str, error_correction_level: ErrorCorrectionLevel, version: int = 1) -> None:
+    def __init__(self, data: str, error_correction_level: ErrorCorrectionLevel, version: int = 1, force_mask: int = None) -> None:
         """
         makes a QR-Code
 
@@ -27,6 +27,8 @@ class QrCode:
                 ErrorCorrectionLevel.M = 15% \n
                 ErrorCorrectionLevel.Q = 25% \n
                 ErrorCorrectionLevel.H = 30% \n
+        force_mask: int
+            the number of the mask to be applied, when None the best will be used
 
         Returns
         -------
@@ -37,7 +39,7 @@ class QrCode:
         self.data = data
         self.error_correction_level = error_correction_level
         
-        self.qr_code_matrix = self._make_qr_code(version)
+        self.qr_code_matrix = self._make_qr_code(version, force_mask=force_mask)
         
 
 
@@ -715,9 +717,10 @@ class QrCode:
         bit_string = self._all_codewords_to_bits(all_codewords)
         return bit_string
 
-    def _layout_phase(self, bit_string: str) -> np.ndarray:
+    def _layout_phase(self, bit_string: str, force_mask: int = None) -> np.ndarray:
         """
         layout the matrix for the QR-Code and place all the Modules within the matrix
+        you can force a specific mask using force_mask (needs to be in range 0..7 (both inclusive))
         """
 
         size = util.calc_qr_size(self.version)
@@ -730,15 +733,21 @@ class QrCode:
         if self.version >= 7:
             matrix = self._place_version_information_string(matrix)
 
-        # this method seems to be faulty ...
-        matrix, mask_pattern_num = self._apply_best_mask(matrix)
+        if force_mask is None:
+            # FIXME: this method seems to be faulty ...
+            matrix, mask_pattern_num = self._apply_best_mask(matrix)
+        else:
+            mask_pattern = util.masking_conditions[force_mask]
+            matrix = self._apply_mask(matrix, mask_pattern)
+
+            mask_pattern_num = force_mask
 
         matrix = self._place_format_information_string(matrix, mask_pattern_num)
         matrix = self._unify_blacks_and_whites(matrix)
 
         return matrix
 
-    def _make_qr_code(self, requested_minimum_version: int):
+    def _make_qr_code(self, requested_minimum_version: int, force_mask: int = None):
         """
         compute the QR-Code
         """
@@ -746,7 +755,7 @@ class QrCode:
         encoded_data_bits = self._encoding_phase(requested_minimum_version)
         data_codewords_in_groups, error_correction_codewords_in_groups = self._error_correction_phase(encoded_data_bits)
         bit_string = self._structuring_phase(data_codewords_in_groups, error_correction_codewords_in_groups)
-        matrix = self._layout_phase(bit_string)
+        matrix = self._layout_phase(bit_string, force_mask=force_mask)
 
         return matrix
 
@@ -768,6 +777,7 @@ class QrCode:
 
         img = Image.fromarray(rgb_matrix)
         img = img.resize((image_size, image_size), resample=Image.NEAREST)
+        # img = img.resize((image_size, image_size), resample=Image.NEAREST)
         
         return img
 
@@ -781,7 +791,8 @@ def main():
     # print(qr.version)
     # qr = QuinceQr("HELLO WORLD", ErrorCorrectionLevel.Q, version=5)
     # qr = QuinceQr("asdafd sadf345435", ErrorCorrectionLevel.M)
-    qr = QrCode("HELLO WORLD", ErrorCorrectionLevel.Q)
+    qr = QrCode("HELLO WORLD", ErrorCorrectionLevel.Q, force_mask=7)
+    # qr = QrCode("HELLO WORLD", ErrorCorrectionLevel.Q)
     
     img = qr.make_image()
     img.show()
