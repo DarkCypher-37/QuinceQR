@@ -776,14 +776,16 @@ class QrCode:
     def change_data(self):
         raise NotImplementedError()
 
-    def calc_possible_logo_size(self) -> int:
+    def calc_possible_logo_size(self, image_length) -> int:
         size = util.calc_qr_size(self.version)
         
         if self.error_correction_level != ErrorCorrectionLevel.H:
             return None
         
-        # return int(size*0.30)
-        return int((size**2*0.30)**0.5)
+        module_length = image_length/(size+6) # length of one module
+        logo_module_length = size*0.1**0.5 # sqrt(0.3), length of the logo in modules
+
+        return int(module_length * logo_module_length)
         
     def make_image(self, image_size: int = 600):
         """

@@ -6,6 +6,7 @@ from PIL import Image, ImageTk
 from tkinter import font
 
 import QuinceQr as QR
+import util
 
 # from dataclasses import dataclass
 # @dataclass
@@ -24,7 +25,7 @@ import QuinceQr as QR
 DEFAULT_QR_TEXT = "QR-Code text here ..."
 DEFAULT_SAVE_FILEPATH_TEXT = "Filepath here ..."
 DEFAULT_LOGO_FILEPATH_TEXT = "Filepath here ..."
-QR_SIZE = 500
+QR_SIZE = 400
 
 ecl_map = {
     "7% (L)" : QR.ErrorCorrectionLevel.L,
@@ -190,26 +191,25 @@ class Window(tk.Tk):
             qr = QR.QrCode(text, ecl, version=version, force_mask=mask)
 
         img = qr.make_image(QR_SIZE)
-        max_logo_size = qr.calc_possible_logo_size()
-        # print(max_logo_size)
+        max_logo_size = qr.calc_possible_logo_size(QR_SIZE)
 
         if self.apply_logo_button_state.get():
             if max_logo_size is None:
                 print("max_logo_size is None, this should never happen")
             else:
 
+                print(util.calc_qr_size(qr.version))
+                print(util.calc_qr_size(qr.version)*0.3**0.5)
+                print(max_logo_size)
+
                 logo = self.logo_orig_image
                 logo = self.logo_orig_image.resize((max_logo_size, max_logo_size))
 
                 white_background = Image.new("RGB", logo.size, "white")
                 pos = int(QR_SIZE/2 - logo.size[0]/2)
-                
-                # white background
-                white_background.paste(logo, mask=logo.split()[3])
-                img.paste(white_background, (pos, pos))
 
-            # transparent background
-            # img.paste(logo, (pos, pos), mask=logo.split()[3])
+                white_background.paste(logo)
+                img.paste(white_background, (pos, pos))
 
         version = qr.version # get the actually used version
         self.change_qr_image(img)
