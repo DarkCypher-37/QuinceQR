@@ -774,9 +774,18 @@ class QrCode:
     # to implement:
     # consider setter and getters for self.data ...
     def change_data(self):
-        ...
+        raise NotImplementedError()
 
-    def make_image(self, image_size: tuple = 600):
+    def calc_possible_logo_size(self) -> int:
+        size = util.calc_qr_size(self.version)
+        
+        if self.error_correction_level != ErrorCorrectionLevel.H:
+            return None
+        
+        # return int(size*0.30)
+        return int((size**2*0.30)**0.5)
+        
+    def make_image(self, image_size: int = 600):
         """
         make the QR-Code data matrix into an pillow image
         """
@@ -788,7 +797,6 @@ class QrCode:
 
         img = Image.fromarray(rgb_matrix)
         img = img.resize((image_size, image_size), resample=Image.Resampling.NEAREST)
-        # img = img.resize((image_size, image_size), resample=Image.NEAREST)
         
         return img
 

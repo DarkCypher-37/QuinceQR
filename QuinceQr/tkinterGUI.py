@@ -24,8 +24,7 @@ import QuinceQr as QR
 DEFAULT_QR_TEXT = "QR-Code text here ..."
 DEFAULT_SAVE_FILEPATH_TEXT = "Filepath here ..."
 DEFAULT_LOGO_FILEPATH_TEXT = "Filepath here ..."
-SHIFT_MODIFIER = 0x1
-CONTROL_MODIFIER = 0x4
+QR_SIZE = 500
 
 ecl_map = {
     "7% (L)" : QR.ErrorCorrectionLevel.L,
@@ -174,22 +173,43 @@ class Window(tk.Tk):
         mask = self.get_mask()
         version = self.get_version()
 
+        if self.apply_logo_button_state.get():
+            self.error_correction_box.current(3)
+
+        ecl = self.get_ecl()
+
         if mask is None and version is None:
-            qr = QR.QrCode(text, self.get_ecl())
+            qr = QR.QrCode(text, ecl)
             mask = "N/A"
         elif mask is None and version is not None:
-            qr = QR.QrCode(text, self.get_ecl(), version=version)
+            qr = QR.QrCode(text, ecl, version=version)
             mask = "N/A"
         elif mask is not None and version is None:
-            qr = QR.QrCode(text, self.get_ecl(), force_mask=mask)
+            qr = QR.QrCode(text, ecl, force_mask=mask)
         else:
-            qr = QR.QrCode(text, self.get_ecl(), version=version, force_mask=mask)
+            qr = QR.QrCode(text, ecl, version=version, force_mask=mask)
 
-        img = qr.make_image(600)
+        img = qr.make_image(QR_SIZE)
+        max_logo_size = qr.calc_possible_logo_size()
+        # print(max_logo_size)
 
         if self.apply_logo_button_state.get():
-            print("apply LOGO here!") # TODO
-            img.paste(self.logo_orig_image, (300, 300))
+            if max_logo_size is None:
+                print("max_logo_size is None, this should never happen")
+            else:
+
+                logo = self.logo_orig_image
+                logo = self.logo_orig_image.resize((max_logo_size, max_logo_size))
+
+                white_background = Image.new("RGB", logo.size, "white")
+                pos = int(QR_SIZE/2 - logo.size[0]/2)
+                
+                # white background
+                white_background.paste(logo, mask=logo.split()[3])
+                img.paste(white_background, (pos, pos))
+
+            # transparent background
+            # img.paste(logo, (pos, pos), mask=logo.split()[3])
 
         version = qr.version # get the actually used version
         self.change_qr_image(img)
